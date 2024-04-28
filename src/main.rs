@@ -1,4 +1,5 @@
 use std::env;
+use std::fs;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,8 +14,15 @@ fn main() {
 }
 
 fn run_file(path: &str) {
-    print!("run_file called");
+    let contents = fs::read(path).expect("Failed to read the provided file");
+    run(contents);
 }
 
-fn run_prompt() {}
+fn run_prompt() {
+    // todo: prompt user for file name >
+}
+
+fn run(_source: Vec<u8>) {
+    print!("success");
+}
 
