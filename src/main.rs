@@ -24,5 +24,10 @@ fn run_prompt() {
 
 fn run(_source: Vec<u8>) {
     print!("success");
+    // todo: scan for tokens and print them out
+}
+
+fn report_error(line: u32, message: &str) {
+    println!("[line {line}] Error: {message}");
 }
 
