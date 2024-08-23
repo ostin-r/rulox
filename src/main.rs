@@ -32,6 +32,13 @@ fn run(source: String) {
 }
 
 fn scan_tokens(contents: String) -> Vec<String> {
+
+    if !contents.is_ascii() {
+        panic!("Provided file contains non-ASCII characters.  Only ASCII is supported")
+    }
+
+    let byte_contents = contents.as_bytes();
+
     let start = 0;
     let current = 0;
     let line = 1;
@@ -53,17 +60,43 @@ fn scan_tokens(contents: String) -> Vec<String> {
           '+' => add_token(token::TokenType::Plus, c.to_string(), line),
           ';' => add_token(token::TokenType::Semicolon, c.to_string(), line),
           '*' => add_token(token::TokenType::Star, c.to_string(), line), 
-          // '!' => {
-          //     if c.next() == '=' {
-          //         // todo: how to look at the next item in a loop??
-          //         let lexeme = c + c.next();
-          //         add_token(token::TokenType::BangEqual, lexeme, line);
-          //     } else {
-          //     }
-          // },
-          // '=' => add_token(match('=') ? EQUAL_EQUAL : EQUAL),
-          // '<' => add_token(match('=') ? LESS_EQUAL : LESS),
-          // '>' => add_token(match('=') ? GREATER_EQUAL : GREATER);
+          '!' => {
+              let next = byte_contents[current] as char;  // note: using as_bytes means that this
+                                                                // language is only compatible with ASCII
+                                                                // characters.  Further work will need to
+                                                                // be done to allow UTF8
+              if next == '=' {
+                  // todo: add '!=' instead of just '!', more work needs to be done on lexemes in
+                  // general though
+                  add_token(token::TokenType::BangEqual, c.to_string(), line);
+              } else {
+                  add_token(token::TokenType::Bang, c.to_string(), line);
+              }
+          },
+          '=' => {
+              let next = byte_contents[current] as char;
+              if next == '=' {
+                  add_token(token::TokenType::EqualEqual, c.to_string(), line)
+              } else {
+                  add_token(token::TokenType::Equal, c.to_string(), line)
+              }
+          },
+          '<' => {
+              let next = byte_contents[current] as char;
+              if next == '=' {
+                  add_token(token::TokenType::LessEqual, c.to_string(), line)
+              } else {
+                  add_token(token::TokenType::Less, c.to_string(), line)
+              }
+          },
+          '>' => {
+              let next = byte_contents[current] as char;
+              if next == '=' {
+                  add_token(token::TokenType::GreaterEqual, c.to_string(), line)
+              } else {
+                  add_token(token::TokenType::Greater, c.to_string(), line)
+              }
+          },
           _ => report_error(line, "Unexpected character")
         };
     }
