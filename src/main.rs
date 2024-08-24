@@ -32,23 +32,17 @@ fn run(source: String) {
 }
 
 fn scan_tokens(contents: String) -> Vec<String> {
-
-    if !contents.is_ascii() {
-        panic!("Provided file contains non-ASCII characters.  Only ASCII is supported")
-    }
-
-    let byte_contents = contents.as_bytes();
-
     let start = 0;
     let current = 0;
-    let line = 1;
+    let mut line = 1;
     let mut tokens: Vec<token::Token> = vec![];
 
     let mut add_token = |token_type, lexeme, line| {
         tokens.push(token::Token{token_type, lexeme, line});
     };
 
-    for c in contents.chars() {
+    let mut iter = contents.chars().peekable();
+    while let Some(c) = iter.next() {
         match c {
           '(' => add_token(token::TokenType::LeftParen, c.to_string(), line),
           ')' => add_token(token::TokenType::RightParen, c.to_string(), line),
@@ -61,42 +55,67 @@ fn scan_tokens(contents: String) -> Vec<String> {
           ';' => add_token(token::TokenType::Semicolon, c.to_string(), line),
           '*' => add_token(token::TokenType::Star, c.to_string(), line), 
           '!' => {
-              let next = byte_contents[current] as char;  // note: using as_bytes means that this
-                                                                // language is only compatible with ASCII
-                                                                // characters.  Further work will need to
-                                                                // be done to allow UTF8
-              if next == '=' {
-                  // todo: add '!=' instead of just '!', more work needs to be done on lexemes in
-                  // general though
-                  add_token(token::TokenType::BangEqual, c.to_string(), line);
-              } else {
-                  add_token(token::TokenType::Bang, c.to_string(), line);
+              if let Some(next) = iter.peek() {
+                   if *next == '=' {
+                       add_token(token::TokenType::BangEqual, c.to_string(), line);
+                       iter.next();
+                   } else {
+                       add_token(token::TokenType::Bang, c.to_string(), line);
+                   }
               }
           },
           '=' => {
-              let next = byte_contents[current] as char;
-              if next == '=' {
-                  add_token(token::TokenType::EqualEqual, c.to_string(), line)
-              } else {
-                  add_token(token::TokenType::Equal, c.to_string(), line)
+              if let Some(next) = iter.peek() {
+                   if *next == '=' {
+                       add_token(token::TokenType::EqualEqual, c.to_string(), line);
+                       iter.next();
+                   } else {
+                       add_token(token::TokenType::Equal, c.to_string(), line);
+                   }
               }
           },
           '<' => {
-              let next = byte_contents[current] as char;
-              if next == '=' {
-                  add_token(token::TokenType::LessEqual, c.to_string(), line)
-              } else {
-                  add_token(token::TokenType::Less, c.to_string(), line)
+              if let Some(next) = iter.peek() {
+                   if *next == '=' {
+                       add_token(token::TokenType::LessEqual, c.to_string(), line);
+                   } else {
+                       add_token(token::TokenType::Less, c.to_string(), line);
+                   }
               }
           },
           '>' => {
-              let next = byte_contents[current] as char;
-              if next == '=' {
-                  add_token(token::TokenType::GreaterEqual, c.to_string(), line)
-              } else {
-                  add_token(token::TokenType::Greater, c.to_string(), line)
+              if let Some(next) = iter.peek() {
+                   if *next == '=' {
+                       add_token(token::TokenType::GreaterEqual, c.to_string(), line);
+                       iter.next();
+                   } else {
+                       add_token(token::TokenType::Greater, c.to_string(), line);
+                       iter.next();
+                   }
               }
           },
+          '/' => {
+              if let Some(next) = iter.peek() {
+                  if *next == '/' {
+                      // for a comment, just consume the rest of the line
+                      iter.next();
+                      while let Some(continued_char) = iter.peek() {
+                          if *continued_char == '\n' {
+                              // note that newlines are not consumed,
+                              // they are parsed later to increment the current line number
+                              break;
+                          }
+                          iter.next();
+                      } 
+                  } else {
+                       add_token(token::TokenType::Slash, c.to_string(), line);
+                  }
+              }
+          },
+          ' ' => (),
+          '\r' => (),
+          '\t' => (),
+          '\n' => line += 1,
           _ => report_error(line, "Unexpected character")
         };
     }
