@@ -1,4 +1,5 @@
 
+#[derive(Debug)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
@@ -20,6 +21,7 @@ pub enum TokenType {
     EndOfFile
 }
 
+#[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,

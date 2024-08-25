@@ -25,15 +25,15 @@ fn run_prompt() {
 }
 
 fn run(source: String) {
-    let tokens: Vec<String> = scan_tokens(source);
+    let tokens: Vec<token::Token> = scan_tokens(source);
     for token in tokens.iter() {
-        println!("{}", token);
+        println!("{:?}", token);
     }
 }
 
-fn scan_tokens(contents: String) -> Vec<String> {
-    let start = 0;
-    let current = 0;
+fn scan_tokens(contents: String) -> Vec<token::Token> {
+    // let start = 0;
+    // let current = 0;
     let mut line = 1;
     let mut tokens: Vec<token::Token> = vec![];
 
@@ -116,11 +116,36 @@ fn scan_tokens(contents: String) -> Vec<String> {
           '\r' => (),
           '\t' => (),
           '\n' => line += 1,
+          '"' => {
+              // String literals
+              // Escape characters not (yet?) supported
+              let mut literal_string = String::new();
+              while let Some(continued_char) = iter.peek() {
+                  if *continued_char == '"' {
+                      iter.next();
+                      break;
+                  }
+                  if *continued_char == '\n' {
+                      line += 1;
+                  }
+                  literal_string.push(*continued_char);
+                  iter.next();
+              }
+              if let None = iter.peek() {
+                  // End of file reached
+                  // Note that anoter possible failure occurs when one string literal is not
+                  // terminated, but more string literals appear throughout the file.
+                  // This will result in jumbled tokens.  Not sure how to handle this currently
+                  report_error(line, "Unterminated string literal");
+              } else {
+                  add_token(token::TokenType::String, literal_string, line);
+              }
+          },
           _ => report_error(line, "Unexpected character")
         };
     }
 
-    vec!["todo".to_string()]
+    tokens
 } 
 
 
