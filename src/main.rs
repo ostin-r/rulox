@@ -141,10 +141,28 @@ fn scan_tokens(contents: String) -> Vec<token::Token> {
                   add_token(token::TokenType::String, literal_string, line);
               }
           },
+          '0'..='9' => {
+              // note: Leading dots are not handled here
+              let mut digit = c.to_string();
+              while let Some(continued_digit) = iter.peek() {
+                  if (*continued_digit >= '0' && *continued_digit <= '9') || *continued_digit == '.' {
+                      digit.push(*continued_digit);
+                      iter.next();
+                  } else {
+                      break;
+                  } 
+              }
+              if let Some(last) = digit.chars().last() {
+                  if last == '.' {
+                      report_error(line, "Trailing decimal on number is not allowed");
+                      break;
+                  }
+              }
+              add_token(token::TokenType::Number, digit, line);
+          },
           _ => report_error(line, "Unexpected character")
         };
     }
-
     tokens
 } 
 
