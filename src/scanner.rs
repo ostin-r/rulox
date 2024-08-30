@@ -9,6 +9,8 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
         tokens.push(token::Token{token_type, lexeme, line});
     };
 
+    let is_identifier = |m: char| m.is_alphanumeric() || m == '_';
+
     let mut iter = contents.chars().peekable();
     while let Some(c) = iter.next() {
         match c {
@@ -128,7 +130,22 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
               }
               add_token(token::TokenType::Number, digit, line);
           },
-          _ => report_error(line, "Unexpected character")
+          _ => {
+              if is_identifier(c) {
+                  let mut identifier_lex = c.to_string();
+                  while let Some(identifier) = iter.peek() {
+                      if is_identifier(*identifier) {
+                          identifier_lex.push(*identifier);
+                          iter.next();
+                      } else {
+                          break;
+                      }
+                  }
+                  add_token(token::TokenType::Identifier, identifier_lex, line); 
+              } else {
+                  report_error(line, "Unexpected character");
+              }
+          }
         };
     }
     tokens
