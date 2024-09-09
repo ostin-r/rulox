@@ -103,9 +103,10 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
               }
               if let None = iter.peek() {
                   // End of file reached
-                  // Note that anoter possible failure occurs when one string literal is not
+                  // Note that another possible failure occurs when one string literal is not
                   // terminated, but more string literals appear throughout the file.
                   // This will result in jumbled tokens.  Not sure how to handle this currently
+                  // It may be handled at the parsing level
                   report_error(line, "Unterminated string literal");
               } else {
                   add_token(token::TokenType::String, literal_string, line);

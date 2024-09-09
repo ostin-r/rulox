@@ -24,6 +24,7 @@ fn run_file(path: &str) {
 
 fn run_prompt() {
     // todo: prompt user for file name >
+    panic!("not implemented");
 }
 
 fn run(source: String) {
