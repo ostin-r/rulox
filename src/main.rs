@@ -1,8 +1,10 @@
 mod token;
 mod scanner;
+mod parser;
 use std::env;
 use std::fs;
 use crate::scanner::scan_tokens;
+use crate::parser::Parser;
 
 
 fn main() {
@@ -32,6 +34,8 @@ fn run(source: String) {
     for token in tokens.iter() {
         println!("{:?}", token);
     }
+    let tokens_iter = tokens.iter().peekable();
+    let parser = Parser { tokens: tokens_iter, token_vec: tokens, current: 0 };
 }
 
 fn report_error(line: u32, message: &str) {

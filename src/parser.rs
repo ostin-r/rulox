@@ -1,5 +1,7 @@
 use crate::expr::Expr;
 use crate::token::{TokenType, Token};
+use crate::report_error;
+use std::iter::Peekable;
 
 // Lox uses recursive descent parsing, a predictive parsing method
 //
@@ -11,19 +13,19 @@ use crate::token::{TokenType, Token};
 // Unary
 //
 
-struct Parser {
-    tokens: Peekable<Iterator>,
+pub struct Parser {
+    tokens: Box<Peekable<dyn Iterator<Item = Token>>>,
     token_vec: Vec<Token>,
     current: i32
 }
 
 impl Parser {
     pub fn parse(&self) -> Expr {
-        let tree = expression(self.tokens);
+        let tree = self.expression();
     }
 
     fn expression(&self) -> Expr {
-        equality()
+        self.equality()
     }
 
     fn equality(&self) -> Expr {
@@ -85,7 +87,41 @@ impl Parser {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.unary();
-            Expr::Unary(operator, right);
+            Expr::Unary(operator, right)
+        }
+        return primary();
+    }
+
+    fn primary(&self) -> Expr {
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::False) {
+            self.current += 1;
+            return Expr::Literal(false);
+        }
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::True) {
+            self.current += 1;
+            return Expr::Literal(true);
+        }
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::Nil) {
+            self.current += 1;
+            return Expr::Literal(None);
+        }
+
+        if let Some(value) = self.tokens.next_if(|x| [TokenType::Number, TokenType::String].contains(x.token_type)) {
+            self.current += 1;
+            let token = self.previous_token();
+            return Expr::Literal(token.lexeme);
+        }
+
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::LeftParen) {
+            self.current += 1;
+            let expr = self.expression();
+            while let Some(value) = self.tokens.peek() {
+                if value.token_type == TokenType::RightParen {
+                    return Expr::Grouping(expr);
+                }
+            }
+            let token = self.token_vec[self.current];
+            report_error(token.line, "Expected ')' after expression")
         }
     }
 
