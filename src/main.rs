@@ -1,6 +1,7 @@
 mod token;
 mod scanner;
 mod parser;
+mod expr;
 use std::env;
 use std::fs;
 use crate::scanner::scan_tokens;

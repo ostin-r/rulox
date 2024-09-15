@@ -14,14 +14,14 @@ use std::iter::Peekable;
 //
 
 pub struct Parser {
-    tokens: Box<Peekable<dyn Iterator<Item = Token>>>,
+    tokens: Peekable<Box<dyn Iterator<Item = Token>>>,
     token_vec: Vec<Token>,
-    current: i32
+    current: usize
 }
 
 impl Parser {
     pub fn parse(&self) -> Expr {
-        let tree = self.expression();
+        self.expression()
     }
 
     fn expression(&self) -> Expr {
@@ -32,11 +32,11 @@ impl Parser {
         let expr = self.comparison();
 
         let equality_fields = [TokenType::EqualEqual, TokenType::BangEqual];
-        while let Some(value) = self.tokens.next_if(|x| equality_fields.contains(x.token_type)) {
+        while let Some(value) = self.tokens.next_if(|x| equality_fields.contains(&x.token_type)) {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.comparison();
-            let expr = Expr::Binary(expr, operator, right);
+            let expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
         }
         expr
     }
@@ -44,14 +44,11 @@ impl Parser {
     fn comparison(&self) -> Expr {
         let expr = self.term();
         let comparison_fields = [TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual];
-        while let Some(value) = self.tokens.next_if(|x| comparison_fields.contains(x.token_type)) {
+        while let Some(value) = self.tokens.next_if(|x| comparison_fields.contains(&x.token_type)) {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.term();
-            let expr = Expr::Binary(expr, operator, right);  // todo: this might not work, be
-                                                             // explicit with naming, or renam expr
-                                                             // to be 'left' for implicit
-                                                             // declaration
+            let expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};  
         }
         expr
     }
@@ -59,11 +56,11 @@ impl Parser {
     fn term(&self) -> Expr {
         let expr = self.factor();
         let term_fields = [TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual];
-        while let Some(value) = self.tokens.next_if(|x| term_fields.contains(x.token_type)) {
+        while let Some(value) = self.tokens.next_if(|x| term_fields.contains(&x.token_type)) {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.factor();
-            let expr = Expr::Binary(expr, operator, right);
+            let expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
         }
         expr
     }
@@ -71,11 +68,11 @@ impl Parser {
     fn factor(&self) -> Expr {
         let expr = self.unary();
         let factor_fields = [TokenType::Slash, TokenType::Star];
-        while let Some(value) = self.tokens.next_if(|x| factor_fields.contains(x.token_type)) {
+        while let Some(value) = self.tokens.next_if(|x| factor_fields.contains(&x.token_type)) {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.unary();
-            let expr = Expr::Binary(expr, operator, right);
+            let expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
         }
         expr
     }
@@ -83,33 +80,41 @@ impl Parser {
     fn unary(&self) -> Expr {
         // todo: fix this, currently allows multiple leading negatives (unless caught at lexer?)
         let unary_fields = [TokenType::Bang, TokenType::Minus];
-        if let Some(value) = self.tokens.next_if(|x| unary_fields.contains(x)) {
+        if let Some(value) = self.tokens.next_if(|x| unary_fields.contains(&x.token_type)) {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.unary();
-            Expr::Unary(operator, right)
+            return Expr::Unary{operator, right: Box::new(right)};
         }
-        return primary();
+        return self.primary();
     }
 
     fn primary(&self) -> Expr {
+        // todo: resolve return value from this, implement indexing for Vec<Token>
         if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::False) {
             self.current += 1;
-            return Expr::Literal(false);
+            return Expr::Boolean(false);
         }
         if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::True) {
             self.current += 1;
-            return Expr::Literal(true);
+            return Expr::Boolean(true);
         }
         if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::Nil) {
             self.current += 1;
-            return Expr::Literal(None);
+            return Expr::Nil;
         }
 
-        if let Some(value) = self.tokens.next_if(|x| [TokenType::Number, TokenType::String].contains(x.token_type)) {
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::String) {
             self.current += 1;
             let token = self.previous_token();
-            return Expr::Literal(token.lexeme);
+            return Expr::String(token.lexeme);
+        }
+
+        if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::Number) {
+            self.current += 1;
+            let token = self.previous_token();
+            let number = token.lexeme.parse::<f32>().unwrap();
+            return Expr::Number(number);
         }
 
         if let Some(value) = self.tokens.next_if(|x| x.token_type == TokenType::LeftParen) {
@@ -117,16 +122,17 @@ impl Parser {
             let expr = self.expression();
             while let Some(value) = self.tokens.peek() {
                 if value.token_type == TokenType::RightParen {
-                    return Expr::Grouping(expr);
+                    return Expr::Grouping(Box::new(expr));
                 }
             }
             let token = self.token_vec[self.current];
-            report_error(token.line, "Expected ')' after expression")
-        }
+            report_error(token.line, "Expected ')' after expression");
+        }    
+        panic!("Failed to parse primary expression");
     }
 
     fn previous_token(&self) -> Token {
-        self.token_vec[self.curent - 1]
+        self.token_vec[self.current - 1]
     }
 
     // fn advance_if(types: List<TokenType>) {
