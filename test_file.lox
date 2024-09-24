@@ -1,12 +1,10 @@
-()
 // this is a comment
-=
-!=
-"this is a string literal"
-1.11
-2
-332211
-1111
-yeehaw
-hello_world
+!true;
+"this is a string literal";
+1.11;
+332211 * 2;
+1111;
+1;
+2;
+(2 * 5 * 2);
 

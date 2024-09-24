@@ -132,6 +132,7 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
               add_token(token::TokenType::Number, digit, line);
           },
           _ => {
+              // todo: need to differentiate protected words and regular identifiers
               if is_identifier(c) {
                   let mut identifier_lex = c.to_string();
                   while let Some(identifier) = iter.peek() {

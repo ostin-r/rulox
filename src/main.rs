@@ -36,8 +36,11 @@ fn run(source: String) {
         println!("{:?}", token);
     }
     let tokens_iter = tokens.iter().peekable();
-    let parser = Parser { tokens: tokens_iter, token_vec: tokens, current: 0 };
+    let mut parser = Parser { tokens: tokens_iter, token_vec: tokens.clone(), current: 0 };
+    let _expression = parser.parse();
+    println!("{:?}", _expression);
 }
+
 
 fn report_error(line: u32, message: &str) {
     println!("[line {line}] Error: {message}");

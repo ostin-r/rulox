@@ -1,9 +1,10 @@
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen, RightParen, LeftBrace, RightBrace,
     Comma, Dot, Minus, Plus, Semicolon, Slash, Star,
+    Question, Colon,
 
     // One or two character tokens
     Bang, BangEqual,
@@ -21,7 +22,7 @@ pub enum TokenType {
     EndOfFile
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
