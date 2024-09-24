@@ -23,17 +23,17 @@ pub struct Parser<'a> {
 
 impl Parser<'_> {
     pub fn parse(&mut self) -> Expr {
-        print!("parsing...");
+        println!("parsing...");
         self.expression()
     }
 
     fn expression(&mut self) -> Expr {
-        print!("parse: expression");
+        println!("parse: expression");
         self.unary_reverse()
     }
 
     fn unary_reverse(&mut self) -> Expr {
-        print!("parse: unary reverse");
+        println!("parse: unary reverse");
         // used for comma expressions
         let expr = self.ternary();
         let unary_reverse_fields = [TokenType::Comma];
@@ -46,7 +46,7 @@ impl Parser<'_> {
     }
 
     fn ternary(&mut self) -> Expr {
-        print!("parse: ternary");
+        println!("parse: ternary");
         let expr = self.equality();
         let ternary_fields = [TokenType::Question];
         if let Some(_value) = self.tokens.next_if(|x| ternary_fields.contains(&x.token_type)) {
@@ -64,7 +64,7 @@ impl Parser<'_> {
 
 
     fn equality(&mut self) -> Expr {
-        print!("parse: equality");
+        println!("parse: equality");
         let mut expr = self.comparison();
 
         let equality_fields = [TokenType::EqualEqual, TokenType::BangEqual];
@@ -78,7 +78,7 @@ impl Parser<'_> {
     }
 
     fn comparison(&mut self) -> Expr {
-        print!("parse: comparison");
+        println!("parse: comparison");
         let mut expr = self.term();
         let comparison_fields = [TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual];
         while let Some(_value) = self.tokens.next_if(|x| comparison_fields.contains(&x.token_type)) {
@@ -91,7 +91,7 @@ impl Parser<'_> {
     }
 
     fn term(&mut self) -> Expr {
-        print!("parse: term");
+        println!("parse: term");
         let mut expr = self.factor();
         let term_fields = [TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual];
         while let Some(_value) = self.tokens.next_if(|x| term_fields.contains(&x.token_type)) {
@@ -104,7 +104,7 @@ impl Parser<'_> {
     }
 
     fn factor(&mut self) -> Expr {
-        print!("parse: factor");
+        println!("parse: factor");
         let mut expr = self.unary();
         let factor_fields = [TokenType::Slash, TokenType::Star];
         while let Some(_value) = self.tokens.next_if(|x| factor_fields.contains(&x.token_type)) {
@@ -130,7 +130,7 @@ impl Parser<'_> {
 
 
     fn primary(&mut self) -> Expr {
-        print!("parse: primary");
+        println!("parse: primary");
         // todo: resolve return value from this, implement indexing for Vec<Token>
         if let Some(_value) = self.tokens.next_if(|x| x.token_type == TokenType::False) {
             self.current += 1;

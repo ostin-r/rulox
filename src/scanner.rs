@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::report_error;
 use crate::token;
 
@@ -8,6 +9,25 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
     let mut add_token = |token_type, lexeme, line| {
         tokens.push(token::Token{token_type, lexeme, line});
     };
+
+    let keywords = HashMap::from([
+        ("and".to_string(), token::TokenType::And),
+        ("class".to_string(), token::TokenType::Class),
+        ("else".to_string(), token::TokenType::Else),
+        ("false".to_string(), token::TokenType::False),
+        ("for".to_string(), token::TokenType::For),
+        ("fun".to_string(), token::TokenType::Fun),
+        ("if".to_string(), token::TokenType::If),
+        ("nil".to_string(), token::TokenType::Nil),
+        ("or".to_string(), token::TokenType::Or),
+        ("print".to_string(), token::TokenType::Print),
+        ("return".to_string(), token::TokenType::Return),
+        ("super".to_string(), token::TokenType::Super),
+        ("this".to_string(), token::TokenType::This),
+        ("true".to_string(), token::TokenType::True),
+        ("var".to_string(), token::TokenType::Var),
+        ("while".to_string(), token::TokenType::While)
+    ]);
 
     let is_identifier = |m: char| m.is_alphanumeric() || m == '_';
 
@@ -143,7 +163,11 @@ pub fn scan_tokens(contents: String) -> Vec<token::Token> {
                           break;
                       }
                   }
-                  add_token(token::TokenType::Identifier, identifier_lex, line); 
+                  if let Some(token_type) = keywords.get(&identifier_lex) {
+                      add_token(*token_type, identifier_lex, line);
+                  } else {
+                      add_token(token::TokenType::Identifier, identifier_lex, line); 
+                  }
               } else {
                   report_error(line, "Unexpected character");
               }
