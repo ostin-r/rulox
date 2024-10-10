@@ -1,6 +1,6 @@
 use crate::expr::Expr;
-use crate::token::{TokenType, Token};
 use crate::report_error;
+use crate::token::{Token, TokenType};
 use std::iter::Peekable;
 
 // Lox uses recursive descent parsing, a predictive parsing method
@@ -17,13 +17,17 @@ use std::iter::Peekable;
 pub struct Parser<'a> {
     pub tokens: Peekable<std::slice::Iter<'a, Token>>,
     pub token_vec: Vec<Token>,
-    pub current: usize
+    pub current: usize,
 }
 
 impl Parser<'_> {
-    pub fn parse(&mut self) -> Expr {
-        println!("parsing...");
-        self.expression()
+    pub fn parse(&mut self) -> Vec<Expr> {
+        let mut statements: Vec<Expr> = Vec::new();
+        while self.current + 1 <= self.tokens.len() {
+            println!("parsing...");
+            statements.push(self.expression());
+        }
+        statements
     }
 
     fn expression(&mut self) -> Expr {
@@ -34,11 +38,17 @@ impl Parser<'_> {
         // used for comma expressions
         let expr = self.ternary();
         let unary_reverse_fields = [TokenType::Comma];
-        if let Some(_value) = self.tokens.next_if(|x| unary_reverse_fields.contains(&x.token_type)) {
+        if let Some(_value) = self
+            .tokens
+            .next_if(|x| unary_reverse_fields.contains(&x.token_type))
+        {
             println!("parse: unary reverse");
             self.current += 1;
             let operator = self.token_vec[self.current].clone();
-            return Expr::UnaryReverse{left: Box::new(expr), operator};
+            return Expr::UnaryReverse {
+                left: Box::new(expr),
+                operator,
+            };
         }
         expr
     }
@@ -46,44 +56,72 @@ impl Parser<'_> {
     fn ternary(&mut self) -> Expr {
         let expr = self.equality();
         let ternary_fields = [TokenType::Question];
-        if let Some(_value) = self.tokens.next_if(|x| ternary_fields.contains(&x.token_type)) {
+        if let Some(_value) = self
+            .tokens
+            .next_if(|x| ternary_fields.contains(&x.token_type))
+        {
             println!("parse: ternary");
             self.current += 1;
             let if_true = self.equality();
             let middle_ternary_fields = [TokenType::Colon];
-            if let Some(_value) = self.tokens.next_if(|x| middle_ternary_fields.contains(&x.token_type)) {
+            if let Some(_value) = self
+                .tokens
+                .next_if(|x| middle_ternary_fields.contains(&x.token_type))
+            {
                 let if_false = self.equality();
-                return Expr::Ternary{condition: Box::new(expr), if_true: Box::new(if_true), if_false: Box::new(if_false)};
+                return Expr::Ternary {
+                    condition: Box::new(expr),
+                    if_true: Box::new(if_true),
+                    if_false: Box::new(if_false),
+                };
             }
             panic!("Ternary expression not terminated, expected ':' after ? operator");
         }
         expr
     }
 
-
     fn equality(&mut self) -> Expr {
         let mut expr = self.comparison();
 
         let equality_fields = [TokenType::EqualEqual, TokenType::BangEqual];
-        while let Some(_value) = self.tokens.next_if(|x| equality_fields.contains(&x.token_type)) {
+        while let Some(_value) = self
+            .tokens
+            .next_if(|x| equality_fields.contains(&x.token_type))
+        {
             println!("parse: equality");
             self.current += 1;
             let operator = self.previous_token();
             let right = self.comparison();
-            expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
         expr
     }
 
     fn comparison(&mut self) -> Expr {
         let mut expr = self.term();
-        let comparison_fields = [TokenType::LessEqual, TokenType::Less, TokenType::Greater, TokenType::GreaterEqual];
-        while let Some(_value) = self.tokens.next_if(|x| comparison_fields.contains(&x.token_type)) {
+        let comparison_fields = [
+            TokenType::LessEqual,
+            TokenType::Less,
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+        ];
+        while let Some(_value) = self
+            .tokens
+            .next_if(|x| comparison_fields.contains(&x.token_type))
+        {
             println!("parse: comparison");
             self.current += 1;
             let operator = self.previous_token();
             let right = self.term();
-            expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};  
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
         expr
     }
@@ -96,7 +134,11 @@ impl Parser<'_> {
             self.current += 1;
             let operator = self.previous_token();
             let right = self.factor();
-            expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
         expr
     }
@@ -104,12 +146,19 @@ impl Parser<'_> {
     fn factor(&mut self) -> Expr {
         let mut expr = self.unary();
         let factor_fields = [TokenType::Slash, TokenType::Star];
-        while let Some(_value) = self.tokens.next_if(|x| factor_fields.contains(&x.token_type)) {
+        while let Some(_value) = self
+            .tokens
+            .next_if(|x| factor_fields.contains(&x.token_type))
+        {
             println!("parse: factor");
             self.current += 1;
             let operator = self.previous_token();
             let right = self.unary();
-            expr = Expr::Binary{left: Box::new(expr), operator, right: Box::new(right)};
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
         }
         expr
     }
@@ -117,16 +166,21 @@ impl Parser<'_> {
     fn unary(&mut self) -> Expr {
         // todo: fix this, currently allows multiple leading negatives (unless caught at lexer?)
         let unary_fields = [TokenType::Bang, TokenType::Minus];
-        if let Some(_value) = self.tokens.next_if(|x| unary_fields.contains(&x.token_type)) {
+        if let Some(_value) = self
+            .tokens
+            .next_if(|x| unary_fields.contains(&x.token_type))
+        {
             println!("parse: unary");
             self.current += 1;
             let operator = self.previous_token();
             let right = self.unary();
-            return Expr::Unary{operator, right: Box::new(right)};
+            return Expr::Unary {
+                operator,
+                right: Box::new(right),
+            };
         }
         return self.primary();
     }
-
 
     fn primary(&mut self) -> Expr {
         // todo: resolve return value from this, implement indexing for Vec<Token>
@@ -161,7 +215,10 @@ impl Parser<'_> {
             return Expr::Number(number);
         }
 
-        if let Some(_value) = self.tokens.next_if(|x| x.token_type == TokenType::LeftParen) {
+        if let Some(_value) = self
+            .tokens
+            .next_if(|x| x.token_type == TokenType::LeftParen)
+        {
             println!("parse: grouping");
             self.current += 1;
             let expr = self.expression();
@@ -172,7 +229,7 @@ impl Parser<'_> {
             }
             let token = self.token_vec[self.current].clone();
             report_error(token.line, "Expected ')' after expression");
-        }    
+        }
         let token = self.token_vec[self.current].clone();
         report_error(token.line, "Failed to parse token");
         println!("{:?}", token);
@@ -183,4 +240,3 @@ impl Parser<'_> {
         self.token_vec[self.current - 1].clone()
     }
 }
-

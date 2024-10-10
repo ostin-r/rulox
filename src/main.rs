@@ -1,16 +1,15 @@
-mod token;
-mod scanner;
-mod parser;
 mod expr;
+mod parser;
+mod scanner;
+mod token;
+use crate::parser::Parser;
+use crate::scanner::scan_tokens;
 use std::env;
 use std::fs;
-use crate::scanner::scan_tokens;
-use crate::parser::Parser;
-
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-   if args.len() > 2 {
+    if args.len() > 2 {
         println!("Failed: invalid amount of arguments");
     } else if args.len() == 2 {
         let filepath: &str = &args[1];
@@ -32,17 +31,17 @@ fn run_prompt() {
 
 fn run(source: String) {
     let tokens: Vec<token::Token> = scan_tokens(source);
-    for token in tokens.iter() {
-        println!("{:?}", token);
-    }
+    print!("{:?}", tokens);
     let tokens_iter = tokens.iter().peekable();
-    let mut parser = Parser { tokens: tokens_iter, token_vec: tokens.clone(), current: 0 };
+    let mut parser = Parser {
+        tokens: tokens_iter,
+        token_vec: tokens.clone(),
+        current: 0,
+    };
     let _expression = parser.parse();
     println!("{:?}", _expression);
 }
 
-
 fn report_error(line: u32, message: &str) {
     println!("[line {line}] Error: {message}");
 }
-
