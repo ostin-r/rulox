@@ -35,8 +35,6 @@ fn run(source: String) {
     let tokens_iter = tokens.iter().peekable();
     let mut parser = Parser {
         tokens: tokens_iter,
-        token_vec: tokens.clone(),
-        current: 0,
     };
     let _expression = parser.parse();
     println!("{:?}", _expression);
