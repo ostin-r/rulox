@@ -3,7 +3,7 @@ use crate::report_error;
 use crate::token::{Token, TokenType};
 use std::iter::Peekable;
 
-// Lox uses recursive descent parsing, a predictive parsing method
+// rlox uses recursive descent parsing, a predictive parsing method
 //
 // In order of lowest to highest precedence:
 // Comma Expressions
@@ -12,6 +12,7 @@ use std::iter::Peekable;
 // Addition
 // Multiplication
 // Unary
+// Literals
 //
 
 pub struct Parser<'a> {

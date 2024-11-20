@@ -1,7 +1,9 @@
 mod expr;
+mod interpreter;
 mod parser;
 mod scanner;
 mod token;
+use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use crate::scanner::scan_tokens;
 use std::env;
@@ -31,13 +33,12 @@ fn run_prompt() {
 
 fn run(source: String) {
     let tokens: Vec<token::Token> = scan_tokens(source);
-    print!("{:?}", tokens);
     let tokens_iter = tokens.iter().peekable();
     let mut parser = Parser {
         tokens: tokens_iter,
     };
-    let _expression = parser.parse();
-    println!("{:?}", _expression);
+    let expression = parser.parse();
+    let mut interpreter = Interpreter {};
 }
 
 fn report_error(line: u32, message: &str) {
